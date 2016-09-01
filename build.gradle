@@ -1,1 +1,22 @@
-apply plugin: 'java'
+apply plugin: 'scala'
+sourceSets {
+main {
+scala {
+srcDirs = ['com']
+}
+}
+
+test {
+scala {
+srcDirs = ['com']
+}
+}
+}
+
+repositories {
+mavenCentral()
+}
+
+dependencies {
+compile 'org.scala-lang:scala-library:2.11.1'
+}
