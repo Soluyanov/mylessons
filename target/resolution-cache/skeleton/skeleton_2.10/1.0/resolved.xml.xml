@@ -4,7 +4,7 @@
 		module="skeleton_2.10"
 		revision="1.0"
 		status="integration"
-		publication="20160901133449"
+		publication="20160901152350"
 	>
 		<description>
 		skeleton
@@ -34,5 +34,7 @@
 	<dependencies>
 		<dependency org="org.scala-lang" name="scala-compiler" rev="2.10.3" conf="scala-tool->default,optional(default)"/>
 		<dependency org="org.scala-lang" name="scala-library" rev="2.10.3" conf="scala-tool->default,optional(default);compile->default(compile)"/>
+		<dependency org="org.apache.spark" name="spark-core_2.10" rev="1.5.2" conf="compile->default(compile)"/>
+		<dependency org="org.apache.spark" name="spark-streaming_2.10" rev="1.5.2" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>
