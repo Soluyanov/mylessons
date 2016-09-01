@@ -4,7 +4,7 @@
 		module="skeleton_2.10"
 		revision="1.0"
 		status="integration"
-		publication="20160901164101"
+		publication="20160901174627"
 	>
 		<description>
 		skeleton
@@ -36,5 +36,22 @@
 		<dependency org="org.scala-lang" name="scala-library" rev="2.10.3" conf="scala-tool->default,optional(default);compile->default(compile)"/>
 		<dependency org="org.apache.spark" name="spark-core_2.10" rev="1.5.2" conf="compile->default(compile)"/>
 		<dependency org="org.apache.spark" name="spark-streaming_2.10" rev="1.5.2" conf="compile->default(compile)"/>
+		<dependency org="com.github.nscala-time" name="nscala-time_2.10" rev="2.0.0" conf="compile->default(compile)"/>
+		<dependency org="mysql" name="mysql-connector-java" rev="5.1.28" conf="compile->default(compile)"/>
+		<dependency org="org.scalaz" name="scalaz-core_2.10" rev="7.1.3" conf="compile->default(compile)"/>
+		<dependency org="org.scalatest" name="scalatest_2.10" rev="2.2.4" conf="compile->default(compile)"/>
+		<dependency org="com.holdenkarau" name="spark-testing-base_2.10" rev="1.4.1_0.1.1" conf="compile->default(compile)"/>
+		<dependency org="org.apache.spark" name="spark-streaming-kafka_2.10" rev="1.5.2" conf="compile->default(compile)"/>
+		<dependency org="org.apache.hadoop" name="hadoop-common" rev="2.6.0" conf="compile->default(compile)"/>
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.7.5" conf="compile->default(compile)"/>
+		<dependency org="org.scalamock" name="scalamock-scalatest-support_2.10" rev="3.2" conf="compile->default(compile)"/>
+		<dependency org="org.scalanlp" name="breeze_2.10" rev="0.9" conf="compile->default(compile)"/>
+		<dependency org="org.scala-lang" name="scala-library" rev="2.10.4" conf="compile->default(compile)"/>
+		<dependency org="com.twitter" name="parquet-hadoop" rev="1.6.0" conf="compile->default(compile)"/>
+		<dependency org="com.twitter" name="parquet-hive-bundle" rev="1.6.0" conf="compile->default(compile)"/>
+		<dependency org="org.apache.spark" name="spark-sql_2.10" rev="1.5.2" conf="compile->default(compile)"/>
+		<dependency org="com.datastax.spark" name="spark-cassandra-connector_2.10" rev="1.3.0" conf="compile->default(compile)"/>
+		<dependency org="org.apache.spark" name="spark-hive_2.10" rev="1.3.0" conf="compile->default(compile)"/>
+		<dependency org="com.datastax.cassandra" name="cassandra-driver-core" rev="2.1.4" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>
