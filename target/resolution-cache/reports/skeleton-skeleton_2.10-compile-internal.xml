@@ -7,15 +7,15 @@
 		revision="1.0"
 		conf="compile-internal"
 		confs="compile, runtime, test, provided, optional, compile-internal, runtime-internal, test-internal, plugin, sources, docs, pom, scala-tool"
-		date="20160901152350"/>
+		date="20160901164101"/>
 	<dependencies>
 		<module organisation="org.apache.spark" name="spark-streaming_2.10">
-			<revision name="1.5.2" status="release" pubdate="20151103233611" resolver="public" artresolver="public" homepage="http://spark.apache.org/" downloaded="true" searched="true" default="false" conf="default, compile, runtime, default(compile), master" position="119">
+			<revision name="1.5.2" status="release" pubdate="20151103233611" resolver="sbt-chain" artresolver="sbt-chain" homepage="http://spark.apache.org/" downloaded="false" searched="false" default="false" conf="default, compile, runtime, default(compile), master" position="119">
 				<license name="Apache 2.0 License" url="http://www.apache.org/licenses/LICENSE-2.0.html"/>
-				<metadata-artifact status="successful" details="" size="7530" time="298" location="/home/alexander/.ivy2/cache/org.apache.spark/spark-streaming_2.10/ivy-1.5.2.xml" searched="true" original-local-location="/home/alexander/.ivy2/cache/org.apache.spark/spark-streaming_2.10/ivy-1.5.2.xml.original" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/org/apache/spark/spark-streaming_2.10/1.5.2/spark-streaming_2.10-1.5.2.pom"/>
+				<metadata-artifact status="no" details="" size="69576" time="0" location="/home/alexander/.ivy2/cache/org.apache.spark/spark-streaming_2.10/ivy-1.5.2.xml" searched="false" origin-is-local="false" origin-location="https://repo1.maven.org/maven2/org/apache/spark/spark-streaming_2.10/1.5.2/spark-streaming_2.10-1.5.2.pom"/>
 				<caller organisation="skeleton" name="skeleton_2.10" conf="compile-internal, compile, provided, optional" rev="1.5.2" rev-constraint-default="1.5.2" rev-constraint-dynamic="1.5.2" callerrev="1.0"/>
 				<artifacts>
-					<artifact name="spark-streaming_2.10" type="jar" ext="jar" status="successful" details="" size="1800587" time="4024" location="/home/alexander/.ivy2/cache/org.apache.spark/spark-streaming_2.10/jars/spark-streaming_2.10-1.5.2.jar">
+					<artifact name="spark-streaming_2.10" type="jar" ext="jar" status="no" details="" size="1800587" time="0" location="/home/alexander/.ivy2/cache/org.apache.spark/spark-streaming_2.10/jars/spark-streaming_2.10-1.5.2.jar">
 						<origin-location is-local="false" location="https://repo1.maven.org/maven2/org/apache/spark/spark-streaming_2.10/1.5.2/spark-streaming_2.10-1.5.2.jar"/>
 					</artifact>
 				</artifacts>
@@ -1732,7 +1732,7 @@
 				<caller organisation="org.apache.hadoop" name="hadoop-common" conf="compile, runtime" rev="1.7.4" rev-constraint-default="1.7.4" rev-constraint-dynamic="1.7.4" callerrev="2.2.0"/>
 				<caller organisation="org.apache.avro" name="avro-ipc" conf="compile, runtime" rev="1.7.7" rev-constraint-default="1.7.7" rev-constraint-dynamic="1.7.7" callerrev="1.7.7"/>
 				<artifacts>
-					<artifact name="avro" type="jar" ext="jar" status="successful" details="" size="436303" time="756" location="/home/alexander/.ivy2/cache/org.apache.avro/avro/jars/avro-1.7.7.jar">
+					<artifact name="avro" type="jar" ext="jar" status="no" details="" size="436303" time="0" location="/home/alexander/.ivy2/cache/org.apache.avro/avro/jars/avro-1.7.7.jar">
 						<origin-location is-local="false" location="https://repo1.maven.org/maven2/org/apache/avro/avro/1.7.7/avro-1.7.7.jar"/>
 					</artifact>
 				</artifacts>
