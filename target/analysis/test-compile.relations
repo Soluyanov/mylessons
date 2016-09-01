@@ -1,0 +1,25 @@
+products:
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> target/test-classes/com/test/core/streaming/FakeTest$$anonfun$1.class
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> target/test-classes/com/test/core/streaming/FakeTest.class
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> target/test-classes/com/test/core/streaming/SparkSpec$class.class
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> target/test-classes/com/test/core/streaming/SparkSpec.class
+binary dependencies:
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/com/holdenkarau/spark-testing-base_2.10/1.4.1_0.1.1/spark-testing-base_2.10-1.4.1_0.1.1.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/org/apache/spark/spark-core_2.10/1.5.2/spark-core_2.10-1.5.2.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/org/scala-lang/scala-library/2.10.4/scala-library-2.10.4.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/org/scalamock/scalamock-core_2.10/3.2/scalamock-core_2.10-3.2.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/org/scalamock/scalamock-scalatest-support_2.10/3.2/scalamock-scalatest-support_2.10-3.2.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /home/alexander/.m2/repository/org/scalatest/scalatest_2.10/2.2.4/scalatest_2.10-2.2.4.jar
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> /usr/lib/jvm/java-8-oracle/jre/lib/rt.jar
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> /home/alexander/.m2/repository/org/apache/spark/spark-core_2.10/1.5.2/spark-core_2.10-1.5.2.jar
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> /home/alexander/.m2/repository/org/scala-lang/scala-library/2.10.4/scala-library-2.10.4.jar
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> /home/alexander/.m2/repository/org/scalatest/scalatest_2.10/2.2.4/scalatest_2.10-2.2.4.jar
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> /usr/lib/jvm/java-8-oracle/jre/lib/rt.jar
+source dependencies:
+external dependencies:
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> com.test.core.streaming.Fake$
+class names:
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> com.test.core.streaming.FakeTest
+   src/test/scala/com/test/core/streaming/FakeTest.scala -> com.test.core.streaming.FakeTest$$anonfun$1
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> com.test.core.streaming.SparkSpec
+   src/test/scala/com/test/core/streaming/SparkSpec.scala -> com.test.core.streaming.SparkSpec$class

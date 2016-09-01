@@ -1,0 +1,12 @@
+products:
+   src/main/scala/com/test/core/streaming/Fake.scala -> target/classes/com/test/core/streaming/Fake$.class
+   src/main/scala/com/test/core/streaming/Fake.scala -> target/classes/com/test/core/streaming/Fake.class
+binary dependencies:
+   src/main/scala/com/test/core/streaming/Fake.scala -> /home/alexander/.m2/repository/org/apache/spark/spark-core_2.10/1.5.2/spark-core_2.10-1.5.2.jar
+   src/main/scala/com/test/core/streaming/Fake.scala -> /home/alexander/.m2/repository/org/scala-lang/scala-library/2.10.4/scala-library-2.10.4.jar
+   src/main/scala/com/test/core/streaming/Fake.scala -> /usr/lib/jvm/java-8-oracle/jre/lib/rt.jar
+source dependencies:
+external dependencies:
+class names:
+   src/main/scala/com/test/core/streaming/Fake.scala -> com.test.core.streaming.Fake
+   src/main/scala/com/test/core/streaming/Fake.scala -> com.test.core.streaming.Fake$
