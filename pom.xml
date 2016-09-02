@@ -198,6 +198,13 @@
         </executions>
           <configuration>
             <recompileMode>incremental</recompileMode>
+<args>
+<arg>-Xfatal-warnings</arg>
+<arg>-Xlint</arg>
+<arg>-deprecation</arg>
+<arg>-explaintypes</arg>
+</args>
+
           </configuration>
 				</plugin>
 				<plugin>
