@@ -11,10 +11,10 @@
 	<name>Kafka Spark Streaming</name>
 
 	<properties>
-		<app.main.class>com.test.core.streaming.Fake</app.main.class>
+		<app.main.class>com.test.core.streaming.main</app.main.class>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<scala.version>2.10.4</scala.version>
-		<spark.core.version>1.5.2</spark.core.version>
+		<spark.core.version>1.6.2</spark.core.version>
 		<slf4j.version>1.7.5</slf4j.version>
 		<guava.version>13.0.1</guava.version>
 		<gson.version>2.2.4</gson.version>
@@ -83,7 +83,6 @@
       <groupId>com.holdenkarau</groupId>
       <artifactId>spark-testing-base_2.10</artifactId>
       <version>1.4.1_0.1.1</version>
-<scope>test</scope>
     </dependency>
 		<dependency>
 			<groupId>org.apache.spark</groupId>
@@ -199,13 +198,6 @@
         </executions>
           <configuration>
             <recompileMode>incremental</recompileMode>
-<args>
-<arg>-Xfatal-warnings</arg>
-<arg>-Xlint</arg>
-<arg>-deprecation</arg>
-<arg>-explaintypes</arg>
-</args>
-
           </configuration>
 				</plugin>
 				<plugin>
