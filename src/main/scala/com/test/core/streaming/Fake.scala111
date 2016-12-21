@@ -39,8 +39,6 @@ import org.apache.hadoop.io.compress.GzipCodec
 import java.io.PrintWriter
 import org.apache.hadoop.fs.FSDataOutputStream
 import java.io._
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.hive.HiveContext
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
@@ -56,25 +54,39 @@ object Fake {
     val Array(zkQuorum, group, topics, numThreads) = args
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val ssc = new StreamingContext(sparkConf, Seconds(5))
-    val sc = ssc.sparkContext
-    val hiveCtx = new HiveContext(sc)
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
-    val lines =
-    KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
-    val counts = lines.map( x => (x, x))
+    val counts =
+      KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     counts.print()
+
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val prefix =
       "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir/output23.txt"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    counts.foreachRDD{ rdd =>
-                    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-                    import sqlContext.implicits._
-                    val wordsDataFrame = rdd.toDF("words")
-                    val wordCountsDataFrame = sqlContext.sql("select word, count(*) as total from words group by word")
-                    wordCountsDataFrame.show()                    
-                     }
+    counts.foreachRDD(
+      rdd =>
+        rdd.collect()
+          rdd.saveAsTextFile("hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir/output23.txt", "txt")
+val spark = SparkSession.builder.config(rdd.sparkContext.getConf).getOrCreate()
+  import spark.implicits._
+// Convert RDD[String] to DataFrame
+  val wordsDataFrame = rdd.toDF("word")
+
+  // Create a temporary view
+  wordsDataFrame.createOrReplaceTempView("words")
+
+  // Do word count on DataFrame using SQL and print it
+  val wordCountsDataFrame = 
+    spark.sql("select word, count(*) as total from words group by word")
+  wordCountsDataFrame.show()
+
+
+
+
+
+
+               )
 
     Log.error("DEBUG info:" + zkQuorum)
 
