@@ -1,4 +1,3 @@
-
 package com.test.core.streaming
 
 import org.apache.hadoop.io.SequenceFile.CompressionType
@@ -8,7 +7,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka._
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.hadoop.io.NullWritable
 import org.apache.log4j.Logger
 import org.apache.hadoop.mapred.lib.MultipleTextOutputFormat
@@ -41,6 +40,7 @@ import org.apache.hadoop.fs.FSDataOutputStream
 import java.io._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
+import scala.io.Source
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
@@ -57,24 +57,40 @@ object Fake {
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val ssc = new StreamingContext(sparkConf, Seconds(5))
     val sc = ssc.sparkContext
-    val hiveCtx = new HiveContext(sc)
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
-    val lines =
-    KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
-    val counts = lines.map( x => (x, x))
+    val counts =
+      KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val prefix =
-      "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir/output23.txt"
+      "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir/output26"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    counts.foreachRDD{ rdd =>
-                    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
-                    import sqlContext.implicits._
-                    val wordsDataFrame = rdd.toDF("words")
-                    val wordCountsDataFrame = sqlContext.sql("select word, count(*) as total from words group by word")
-                    wordCountsDataFrame.show()                    
-                     }
+    counts.foreachRDD(rdd => {
+
+      rdd
+        .collect()
+        .foreach(
+          line =>
+            if (hdfs.exists(path) == true) { //проверяем, существует ли уже файл, в который собираемся писать
+              val fsDataOutputStream = hdfs.append(
+                new org.apache.hadoop.fs.Path(
+                  "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir2/part-00000")) //создаём исходящий поток, добавляющий записи к существующему файлу
+              val outputStreamWriter = new OutputStreamWriter(
+                fsDataOutputStream) //создаём то, что будет писать пот ок
+              val bufferedWriter = new BufferedWriter(outputStreamWriter) //буферизируем записываемые данные чтобы снизить количество обращений к физическому носителю. Можно и не делать этого.
+              bufferedWriter.write(line) //записываем данные в файл
+              bufferedWriter.close()
+              outputStreamWriter.close()
+              fsDataOutputStream.close()
+            } else {
+              rdd
+                .coalesce(1)
+                .saveAsTextFile(
+                  "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir2")
+          })
+
+    })
 
     Log.error("DEBUG info:" + zkQuorum)
 
