@@ -41,10 +41,11 @@ import java.io._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
 import scala.io.Source
+
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-
+case class Test(field1:String,field3:java.sql.Date)
   def main(args: Array[String]) {
     if (args.length < 4) {
       System.err.println(
@@ -57,40 +58,35 @@ object Fake {
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val ssc = new StreamingContext(sparkConf, Seconds(5))
     val sc = ssc.sparkContext
+
+     val sqlContext= new org.apache.spark.sql.SQLContext(sc)
+      import sqlContext.implicits._
+
+
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val counts =
       KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val prefix =
-      "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir/output26"
+      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
+
     counts.foreachRDD(rdd => {
+                              rdd.collect()
+                              var utilDate = new java.util.Date()
+                              var date = new java.sql.Date(utilDate.getTime())
+                              val df = rdd.map( x=> Test(x,date)).toDF()
+                              
+                              if (hdfs.exists(path) == true) {
 
-      rdd
-        .collect()
-        .foreach(
-          line =>
-            if (hdfs.exists(path) == true) { //проверяем, существует ли уже файл, в который собираемся писать
-              val fsDataOutputStream = hdfs.append(
-                new org.apache.hadoop.fs.Path(
-                  "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir2/part-00000")) //создаём исходящий поток, добавляющий записи к существующему файлу
-              val outputStreamWriter = new OutputStreamWriter(
-                fsDataOutputStream) //создаём то, что будет писать пот ок
-              val bufferedWriter = new BufferedWriter(outputStreamWriter) //буферизируем записываемые данные чтобы снизить количество обращений к физическому носителю. Можно и не делать этого.
-              bufferedWriter.write(line) //записываем данные в файл
-              bufferedWriter.close()
-              outputStreamWriter.close()
-              fsDataOutputStream.close()
-            } else {
-              rdd
-                .coalesce(1)
-                .saveAsTextFile(
-                  "hdfs://c6402.ambari.apache.org:8020/user/hdfs/newdir2")
-          })
+                              df.write.partitionBy("field3").mode(org.apache.spark.sql.SaveMode.Append).parquet("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2")
+                              } else {
 
-    })
+df.write.partitionBy("field3").parquet("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2")
+}
+                         })
 
     Log.error("DEBUG info:" + zkQuorum)
 
