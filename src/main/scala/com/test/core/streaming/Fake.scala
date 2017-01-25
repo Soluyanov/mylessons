@@ -45,7 +45,7 @@ import scala.io.Source
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-case class Test(field1:String,field3:java.sql.Date)
+  case class Test(field1:String,field2:Int,field3:java.sql.Date,field4:Int)
   def main(args: Array[String]) {
     if (args.length < 4) {
       System.err.println(
@@ -69,24 +69,44 @@ case class Test(field1:String,field3:java.sql.Date)
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val prefix =
-      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2"
+      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test9"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
+    var iter = 0
 
     counts.foreachRDD(rdd => {
-                              rdd.collect()
-                              var utilDate = new java.util.Date()
-                              var date = new java.sql.Date(utilDate.getTime())
-                              val df = rdd.map( x=> Test(x,date)).toDF()
-                              
-                              if (hdfs.exists(path) == true) {
+      rdd.collect()
+      var utilDate = new java.util.Date()
+      var date = new java.sql.Date(utilDate.getTime())
+      val df = rdd.map(x => Test(x, 10, date, 20)).toDF()
+      df.show()
+      if (hdfs.exists(path) == true) {
 
-                              df.write.partitionBy("field3").mode(org.apache.spark.sql.SaveMode.Append).parquet("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2")
-                              } else {
+        df.write
+          .partitionBy("field3")
+          .mode(org.apache.spark.sql.SaveMode.Append)
+          .format("parquet")
+          .save(prefix)
+        iter += 1
+      } else {
 
-df.write.partitionBy("field3").parquet("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/newdata2")
-}
-                         })
+        df.write.partitionBy("field3").format("parquet").save(prefix)
+        iter += 1
+      }
+
+      if (iter == 20) {
+        val bufferDF = sqlContext.read.parquet(prefix)
+        bufferDF
+          .coalesce(1)
+          .write
+          .partitionBy("field3")
+          .mode(org.apache.spark.sql.SaveMode.Overwrite)
+          .format("parquet")
+          .save("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/aggregation1")
+        iter = 0
+      }
+
+    })
 
     Log.error("DEBUG info:" + zkQuorum)
 
@@ -108,3 +128,4 @@ df.write.partitionBy("field3").parquet("hdfs://c6402.ambari.apache.org:8020/apps
 
   }
 }
+
