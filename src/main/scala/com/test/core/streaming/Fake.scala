@@ -45,16 +45,16 @@ import org.apache.spark.sql.functions.unix_timestamp
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-  case class Test(field1:String,field2:Int,field3:java.sql.Timestamp,field4:Int, field5:java.sql.Date )
+  case class streamData(Data:String,Count1:Int,Date_and_time:java.sql.Timestamp,Count2:Int, Date:java.sql.Date )
   def main(args: Array[String]) {
-    if (args.length < 4) {
+    if (args.length < 5) {
       System.err.println(
         "Usage: KafkaWordCountProducer <metadataBrokerList> <topic> " +
           "<messagesPerSec> <wordsPerMessage>")
       System.exit(1)
     }
 
-    val Array(zkQuorum, group, topics, numThreads) = args
+    val Array(zkQuorum, group, topics, numThreads, prefix) = args
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val ssc = new StreamingContext(sparkConf, Seconds(5))
     val sc = ssc.sparkContext
@@ -68,43 +68,45 @@ object Fake {
       KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
-    val prefix =
-      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test10"
+   // val prefix =
+     // "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test10"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    var iter = 0
-
+    
     counts.foreachRDD(rdd => {
-      rdd.collect()
       var utilDate = new java.util.Date()
       var date = new java.sql.Date(utilDate.getTime())
       var ts = java.sql.Timestamp.from(java.time.Instant.now)
-      val df = rdd.map(x => Test(x, 10, ts, 20, date)).toDF()
+      val df = rdd.map(x => streamData(x, 10, ts, 20, date)).toDF()
       df.show()
       if (hdfs.exists(path) == true) {
 
-        df.write
-          .partitionBy("field5")
+        df.coalesce(1)
+          .write
+          .partitionBy("Date")
           .mode(org.apache.spark.sql.SaveMode.Append)
           .format("parquet")
           .save(prefix)
-        iter += 1
-      } else {
+              } else {
 
-        df.write.partitionBy("field5").format("parquet").save(prefix)
-        iter += 1
-      }
+        df.coalesce(1).write.partitionBy("Date").format("parquet").save(prefix)
+             }
 
-      if (iter == 20) {
+var cs = hdfs.getContentSummary(path)
+var fileCount = cs.getFileCount()
+println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+println(fileCount)
+println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+      if (fileCount == 20) {
         val bufferDF = sqlContext.read.parquet(prefix)
         bufferDF
           .coalesce(1)
           .write
-          .partitionBy("field5")
+          .partitionBy("Date")
           .mode(org.apache.spark.sql.SaveMode.Overwrite)
           .format("parquet")
           .save("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/aggregation1")
-        iter = 0
+        hdfs.delete(path)
       }
 
     })
