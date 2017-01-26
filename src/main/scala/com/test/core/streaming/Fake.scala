@@ -41,11 +41,11 @@ import java.io._
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.hive.HiveContext
 import scala.io.Source
-
+import org.apache.spark.sql.functions.unix_timestamp
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-  case class Test(field1:String,field2:Int,field3:java.sql.Date,field4:Int)
+  case class Test(field1:String,field2:Int,field3:java.sql.Timestamp,field4:Int, field5:java.sql.Date )
   def main(args: Array[String]) {
     if (args.length < 4) {
       System.err.println(
@@ -69,7 +69,7 @@ object Fake {
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val prefix =
-      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test9"
+      "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test10"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
     var iter = 0
@@ -78,19 +78,20 @@ object Fake {
       rdd.collect()
       var utilDate = new java.util.Date()
       var date = new java.sql.Date(utilDate.getTime())
-      val df = rdd.map(x => Test(x, 10, date, 20)).toDF()
+      var ts = java.sql.Timestamp.from(java.time.Instant.now)
+      val df = rdd.map(x => Test(x, 10, ts, 20, date)).toDF()
       df.show()
       if (hdfs.exists(path) == true) {
 
         df.write
-          .partitionBy("field3")
+          .partitionBy("field5")
           .mode(org.apache.spark.sql.SaveMode.Append)
           .format("parquet")
           .save(prefix)
         iter += 1
       } else {
 
-        df.write.partitionBy("field3").format("parquet").save(prefix)
+        df.write.partitionBy("field5").format("parquet").save(prefix)
         iter += 1
       }
 
@@ -99,7 +100,7 @@ object Fake {
         bufferDF
           .coalesce(1)
           .write
-          .partitionBy("field3")
+          .partitionBy("field5")
           .mode(org.apache.spark.sql.SaveMode.Overwrite)
           .format("parquet")
           .save("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/aggregation1")

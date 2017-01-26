@@ -4,8 +4,8 @@
 CREATE TABLE parquet_test (
  field1 string,
  field2 int,
- field4 int) 
-PARTITIONED BY (field3 date)
+ field3 timestamp, 
+ field4 int)
 STORED AS PARQUET;
 
 7.2 Ответьте на вопрос ,что такое repartition и что такое coalesce и в чём разница?
