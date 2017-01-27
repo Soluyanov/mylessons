@@ -55,24 +55,25 @@ object Fake {
     }
 
     val Array(zkQuorum, group, topics, numThreads, prefix) = args
+
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
-    val ssc = new StreamingContext(sparkConf, Seconds(5))
-    val sc = ssc.sparkContext
-
-     val sqlContext= new org.apache.spark.sql.SQLContext(sc)
-      import sqlContext.implicits._
-
+    val sc = new SparkContext(sparkConf)
+    val ssc = new StreamingContext(sc, Seconds(5))
+    val sqlContext= new org.apache.spark.sql.SQLContext(sc)
+    import sqlContext.implicits._
+    val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+    sc.getConf.getAll.foreach(println)
+    println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+  
 
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val counts =
       KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
     counts.print()
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
-   // val prefix =
-     // "hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/parquet_test10"
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    
+//    hiveContext.sql("CREATE TABLE IF NOT EXISTS parquet_test10 (field1 string,field2 int,field3 timestamp,field4 int)STORED AS PARQUET")
     counts.foreachRDD(rdd => {
       var utilDate = new java.util.Date()
       var date = new java.sql.Date(utilDate.getTime())
@@ -81,15 +82,14 @@ object Fake {
       df.show()
       if (hdfs.exists(path) == true) {
 
-        df.coalesce(1)
-          .write
+        df.write
           .partitionBy("Date")
           .mode(org.apache.spark.sql.SaveMode.Append)
           .format("parquet")
           .save(prefix)
               } else {
 
-        df.coalesce(1).write.partitionBy("Date").format("parquet").save(prefix)
+        df.write.partitionBy("Date").format("parquet").save(prefix)
              }
 
 var cs = hdfs.getContentSummary(path)
@@ -97,10 +97,9 @@ var fileCount = cs.getFileCount()
 println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 println(fileCount)
 println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-      if (fileCount == 20) {
+      if (fileCount >= 20) {
         val bufferDF = sqlContext.read.parquet(prefix)
         bufferDF
-          .coalesce(1)
           .write
           .partitionBy("Date")
           .mode(org.apache.spark.sql.SaveMode.Overwrite)
