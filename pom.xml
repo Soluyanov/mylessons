@@ -200,6 +200,21 @@
             </execution>
         </executions>
           <configuration>
+
+
+<configuration>
+  <compilerPlugins>
+    <compilerPlugin>
+      <groupId>org.psywerx.hairyfotr</groupId>
+      <artifactId>linter_2.11</artifactId>
+      <version>0.1.17</version>
+    </compilerPlugin>
+  </compilerPlugins>
+</configuration>
+
+
+
+
             <recompileMode>incremental</recompileMode>
           </configuration>
 				</plugin>

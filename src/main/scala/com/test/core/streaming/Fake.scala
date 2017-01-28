@@ -1,4 +1,3 @@
-package com.test.core.streaming
 
 import org.apache.hadoop.io.SequenceFile.CompressionType
 import org.apache.hadoop.io.compress.CompressionCodec
@@ -45,7 +44,11 @@ import org.apache.spark.sql.functions.unix_timestamp
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-  case class streamData(Data:String,Count1:Int,Time_stamp:java.sql.Timestamp,Count2:Int, Date:java.sql.Date )
+  case class streamData(data: String,
+                        count1: Int,
+                        timeStamp: java.sql.Timestamp,
+                        count2: Int,
+                        date: java.sql.Date)
   def main(args: Array[String]) {
     if (args.length < 5) {
       System.err.println(
@@ -59,11 +62,8 @@ object Fake {
     val sparkConf = new SparkConf().setAppName("Fake")
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(5))
- //   val sqlContext= new org.apache.spark.sql.SQLContext(sc)
     val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
     import hiveContext.implicits._
-    println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-  
 
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val counts =
@@ -72,7 +72,8 @@ object Fake {
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    hiveContext.sql("CREATE TABLE IF NOT EXISTS parquet_test10 (Data string,Count1 int,Time_stamp timestamp,Count2 int)STORED AS PARQUET")
+    hiveContext.sql(
+      "CREATE TABLE IF NOT EXISTS parquet_test10 (data string,count1 int,timeStamp timestamp,count2 int)STORED AS PARQUET")
     counts.foreachRDD(rdd => {
       var utilDate = new java.util.Date()
       var date = new java.sql.Date(utilDate.getTime())
@@ -86,20 +87,16 @@ object Fake {
           .mode(org.apache.spark.sql.SaveMode.Append)
           .format("parquet")
           .save(prefix)
-              } else {
+      } else {
 
         df.write.partitionBy("Date").format("parquet").save(prefix)
-             }
+      }
 
-var cs = hdfs.getContentSummary(path)
-var fileCount = cs.getFileCount()
-println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
-println(fileCount)
-println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+      var cs = hdfs.getContentSummary(path)
+      var fileCount = cs.getFileCount()
       if (fileCount >= 20) {
         val bufferDF = hiveContext.read.parquet(prefix)
-        bufferDF
-          .write
+        bufferDF.write
           .partitionBy("Date")
           .mode(org.apache.spark.sql.SaveMode.Overwrite)
           .format("parquet")
