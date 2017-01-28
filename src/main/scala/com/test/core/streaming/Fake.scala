@@ -45,7 +45,7 @@ import org.apache.spark.sql.functions.unix_timestamp
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-  case class streamData(Data:String,Count1:Int,Date_and_time:java.sql.Timestamp,Count2:Int, Date:java.sql.Date )
+  case class streamData(Data:String,Count1:Int,Time_stamp:java.sql.Timestamp,Count2:Int, Date:java.sql.Date )
   def main(args: Array[String]) {
     if (args.length < 5) {
       System.err.println(
@@ -56,13 +56,12 @@ object Fake {
 
     val Array(zkQuorum, group, topics, numThreads, prefix) = args
 
-    val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
+    val sparkConf = new SparkConf().setAppName("Fake")
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(5))
-    val sqlContext= new org.apache.spark.sql.SQLContext(sc)
-    import sqlContext.implicits._
+ //   val sqlContext= new org.apache.spark.sql.SQLContext(sc)
     val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
-    sc.getConf.getAll.foreach(println)
+    import hiveContext.implicits._
     println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
   
 
@@ -73,7 +72,7 @@ object Fake {
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val path = new org.apache.hadoop.fs.Path(prefix)
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-//    hiveContext.sql("CREATE TABLE IF NOT EXISTS parquet_test10 (field1 string,field2 int,field3 timestamp,field4 int)STORED AS PARQUET")
+    hiveContext.sql("CREATE TABLE IF NOT EXISTS parquet_test10 (Data string,Count1 int,Time_stamp timestamp,Count2 int)STORED AS PARQUET")
     counts.foreachRDD(rdd => {
       var utilDate = new java.util.Date()
       var date = new java.sql.Date(utilDate.getTime())
@@ -98,7 +97,7 @@ println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 println(fileCount)
 println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
       if (fileCount >= 20) {
-        val bufferDF = sqlContext.read.parquet(prefix)
+        val bufferDF = hiveContext.read.parquet(prefix)
         bufferDF
           .write
           .partitionBy("Date")
