@@ -1,3 +1,4 @@
+package com.test.core.streaming
 
 import org.apache.hadoop.io.SequenceFile.CompressionType
 import org.apache.hadoop.io.compress.CompressionCodec
@@ -44,74 +45,29 @@ import org.apache.spark.sql.functions.unix_timestamp
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
-  case class streamData(data: String,
-                        count1: Int,
-                        timeStamp: java.sql.Timestamp,
-                        count2: Int,
-                        date: java.sql.Date)
   def main(args: Array[String]) {
-    if (args.length < 5) {
+    if (args.length < 4 ) {
       System.err.println(
         "Usage: KafkaWordCountProducer <metadataBrokerList> <topic> " +
           "<messagesPerSec> <wordsPerMessage>")
       System.exit(1)
     }
 
-    val Array(zkQuorum, group, topics, numThreads, prefix) = args
+    val Array(zkQuorum, group, topics, numThreads) = args
 
-    val sparkConf = new SparkConf().setAppName("Fake")
+    val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(5))
-    val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
-    import hiveContext.implicits._
-
-    val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
-    val counts =
-      KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
-    counts.print()
-    val hadoopConf = new org.apache.hadoop.conf.Configuration()
-    val path = new org.apache.hadoop.fs.Path(prefix)
-    val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    hiveContext.sql(
-      "CREATE TABLE IF NOT EXISTS parquet_test10 (data string,count1 int,timeStamp timestamp,count2 int)STORED AS PARQUET")
-    counts.foreachRDD(rdd => {
-      var utilDate = new java.util.Date()
-      var date = new java.sql.Date(utilDate.getTime())
-      var ts = java.sql.Timestamp.from(java.time.Instant.now)
-      val df = rdd.map(x => streamData(x, 10, ts, 20, date)).toDF()
-      df.show()
-      if (hdfs.exists(path) == true) {
-
-        df.write
-          .partitionBy("Date")
-          .mode(org.apache.spark.sql.SaveMode.Append)
-          .format("parquet")
-          .save(prefix)
-      } else {
-
-        df.write.partitionBy("Date").format("parquet").save(prefix)
-      }
-
-      var cs = hdfs.getContentSummary(path)
-      var fileCount = cs.getFileCount()
-      if (fileCount >= 20) {
-        val bufferDF = hiveContext.read.parquet(prefix)
-        bufferDF.write
-          .partitionBy("Date")
-          .mode(org.apache.spark.sql.SaveMode.Overwrite)
-          .format("parquet")
-          .save("hdfs://c6402.ambari.apache.org:8020/apps/hive/warehouse/aggregation1")
-        hdfs.delete(path)
-      }
-
-    })
+val host = numThreads
+   val lines = ssc.socketTextStream(host, 514)
+lines.print()
 
     Log.error("DEBUG info:" + zkQuorum)
 
     sys.ShutdownHookThread({
       println("Ctrl+C")
       try {
-        hdfs.close()
+        
         ssc.stop(stopSparkContext = true, stopGracefully = true)
       } catch {
         case e: Throwable => {
