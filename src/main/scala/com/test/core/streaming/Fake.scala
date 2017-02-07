@@ -63,24 +63,27 @@ object Fake {
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    def writeLogFiles(facilityLevel: String, msg: String, prefix: String) = {
-      val path = new Path(prefix)
-      if (hdfs.exists(path) == true) { //проверяем, существует ли уже файл, в который собираемся писать
-        val bufferedWriter = new BufferedWriter(
-          new OutputStreamWriter(hdfs.append(path)))
-        bufferedWriter.write(msg) //записываем данные в файл
-        bufferedWriter.close()
-      } else {
-        val bufferedWriter = new BufferedWriter(
-          new OutputStreamWriter(hdfs.create(path)))
-        bufferedWriter
-          .write(facilityLevel + "\n" + msg + "\n") //записываем данные в файл
-        bufferedWriter.close()
 
+    def writeLogFiles(facilityLevel: String, msg: String) = {
+      val path = new Path(pathToStore + "/" + facilityLevel)
+      def defineOutputStream(fsDataOutputStream: FSDataOutputStream) = {
+        val bufferedWriter = new BufferedWriter(
+          new OutputStreamWriter(fsDataOutputStream))
+        bufferedWriter
+          .write(msg + "\n")
+        bufferedWriter.close()
       }
+      def append() = defineOutputStream(hdfs.append(path))
+      def create() = defineOutputStream(hdfs.create(path))
+      if (hdfs.exists(path)) append() else create()
 
     }
 
+    def defineFacilityLevel(message: String) = message.split("\t").head
+    def defineMessage(message: String) = {
+      val fields = message.split("\t")
+      fields(3)
+    }
     if (source == "kafka") {
 
       val messages =
@@ -91,12 +94,10 @@ object Fake {
           .collect()
           .foreach(
             message => {
-              val fields = message.split("\t")
-              val facilityLevel = fields.head
-              val msg = fields(3)
-              println(facilityLevel)
+              val facilityLevel = defineFacilityLevel(message)
+              val msg = defineMessage(message)
               val prefix = pathToStore + "/" + facilityLevel
-              writeLogFiles(facilityLevel, msg, prefix)
+              writeLogFiles(facilityLevel, msg)
 
             }
           )
@@ -109,8 +110,8 @@ object Fake {
 
       while (true) {
         val clientSocket = server.accept()
-        val isr = new InputStreamReader(clientSocket.getInputStream())
-        val reader = new BufferedReader(isr)
+        val reader = new BufferedReader(
+          new InputStreamReader(clientSocket.getInputStream()))
         var line = reader.readLine()
         while (!line.isEmpty()) {
           println(line)
@@ -122,7 +123,7 @@ object Fake {
           val level = pri - (facility * 8)
           val facilityLevel = facility.toString + '_' + level.toString
           val prefix = pathToStore + "/" + facilityLevel
-          writeLogFiles(facilityLevel, msg, prefix)
+          writeLogFiles(facilityLevel, msg)
           line = reader.readLine()
         }
       }
