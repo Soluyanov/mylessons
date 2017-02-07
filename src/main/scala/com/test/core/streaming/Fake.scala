@@ -43,11 +43,12 @@ import org.apache.spark.sql.hive.HiveContext
 import scala.io.Source
 import org.apache.spark.sql.functions.unix_timestamp
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
+import org.apache.hadoop.fs.Path
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
   def main(args: Array[String]) {
-    if (args.length < 4) {
+    if (args.length < 5) {
       System.err.println(
         "Usage: KafkaWordCountProducer <metadataBrokerList> <topic> " +
           "<messagesPerSec> <wordsPerMessage>")
@@ -62,29 +63,19 @@ object Fake {
     val topicMap = topics.split(",").map((_, numThreads.toInt)).toMap
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-
     def writeLogFiles(facilityLevel: String, msg: String, prefix: String) = {
-      val path = new org.apache.hadoop.fs.Path(prefix)
+      val path = new Path(prefix)
       if (hdfs.exists(path) == true) { //проверяем, существует ли уже файл, в который собираемся писать
-        val fsDataOutputStream = hdfs.append(new org.apache.hadoop.fs.Path(
-          prefix)) //создаём исходящий поток, добавляющий записи к существующему файлу
-        val outputStreamWriter = new OutputStreamWriter(fsDataOutputStream) //создаём то, что будет писать пот ок
-        val bufferedWriter = new BufferedWriter(outputStreamWriter) //буферизируем записываемые данные чтобы снизить количество обращений к физическому носителю. Можно и не делать этого.
+        val bufferedWriter = new BufferedWriter(
+          new OutputStreamWriter(hdfs.append(path)))
         bufferedWriter.write(msg) //записываем данные в файл
         bufferedWriter.close()
-        outputStreamWriter.close()
-        fsDataOutputStream.close()
       } else {
-
-        val fsDataOutputStream = hdfs.create(new org.apache.hadoop.fs.Path(
-          prefix)) //создаём исходящий поток, добавляющий записи к существующему файлу
-        val outputStreamWriter = new OutputStreamWriter(fsDataOutputStream) //создаём то, что будет писать пот ок
-        val bufferedWriter = new BufferedWriter(outputStreamWriter) //буферизируем записываемые данные чтобы снизить количество обращений к физическому носителю. Можно и не делать этого.
+        val bufferedWriter = new BufferedWriter(
+          new OutputStreamWriter(hdfs.create(path)))
         bufferedWriter
           .write(facilityLevel + "\n" + msg + "\n") //записываем данные в файл
         bufferedWriter.close()
-        outputStreamWriter.close()
-        fsDataOutputStream.close()
 
       }
 
