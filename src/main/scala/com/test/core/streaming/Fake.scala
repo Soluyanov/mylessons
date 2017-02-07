@@ -44,6 +44,10 @@ import scala.io.Source
 import org.apache.spark.sql.functions.unix_timestamp
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 import org.apache.hadoop.fs.Path
+
+/**
+  * Application used to write rsyslog messages to hdfs
+  */
 object Fake {
 
   val Log = Logger.getLogger(Fake.this.getClass().getSimpleName())
@@ -64,6 +68,10 @@ object Fake {
     val hadoopConf = new org.apache.hadoop.conf.Configuration()
     val hdfs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
 
+    /**
+      * Writes messages in files and specifies the behavior, when target
+      * file exists or not
+      */
     def writeLogFiles(facilityLevel: String, msg: String) = {
       val path = new Path(pathToStore + "/" + facilityLevel)
       def defineOutputStream(fsDataOutputStream: FSDataOutputStream) = {
@@ -79,11 +87,28 @@ object Fake {
 
     }
 
-    def defineFacilityLevel(message: String) = message.split("\t").head
-    def defineMessage(message: String) = {
+    /** Defines facility level, when Kafka is a source */
+    def defineFacilityLevelKafka(message: String) = message.split("\t").head
+
+    /** Defines facility level, when TCP socket is a source */
+    def defineFacilityLevelSocket(message: String) = {
+      val pri =
+        message.substring(message.indexOf("<") + 1, message.indexOf(">")).toInt
+      val facility = pri / 8
+      val level = pri - (facility * 8)
+      facility.toString + '_' + level.toString
+    }
+
+    /** Defines message, when Kafka is a source */
+    def defineMessageKafka(message: String) = {
       val fields = message.split("\t")
       fields(3)
     }
+
+    /** Defines message, when TCP socket is a source */
+    def defineMessageSocket(message: String) =
+      message.substring(message.indexOf(": ") + 1)
+
     if (source == "kafka") {
 
       val messages =
@@ -94,9 +119,8 @@ object Fake {
           .collect()
           .foreach(
             message => {
-              val facilityLevel = defineFacilityLevel(message)
-              val msg = defineMessage(message)
-              val prefix = pathToStore + "/" + facilityLevel
+              val facilityLevel = defineFacilityLevelKafka(message)
+              val msg = defineMessageKafka(message)
               writeLogFiles(facilityLevel, msg)
 
             }
@@ -116,13 +140,8 @@ object Fake {
         while (!line.isEmpty()) {
           println(line)
 
-          val pri =
-            line.substring(line.indexOf("<") + 1, line.indexOf(">")).toInt
-          val msg = line.substring(line.indexOf(": ") + 1)
-          val facility = pri / 8
-          val level = pri - (facility * 8)
-          val facilityLevel = facility.toString + '_' + level.toString
-          val prefix = pathToStore + "/" + facilityLevel
+          val msg = defineMessageSocket(line)
+          val facilityLevel = defineFacilityLevelSocket(line)
           writeLogFiles(facilityLevel, msg)
           line = reader.readLine()
         }
@@ -150,3 +169,4 @@ object Fake {
 
   }
 }
+
