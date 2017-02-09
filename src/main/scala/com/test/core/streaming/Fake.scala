@@ -44,6 +44,7 @@ import scala.io.Source
 import org.apache.spark.sql.functions.unix_timestamp
 import java.net.{InetAddress, ServerSocket, Socket, SocketException}
 import org.apache.hadoop.fs.Path
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * Application used to write rsyslog messages to hdfs
@@ -60,7 +61,6 @@ object Fake {
     }
 
     val Array(zkQuorum, group, topics, numThreads, source, pathToStore) = args
-
     val sparkConf = new SparkConf().setMaster("local[2]").setAppName("Fake")
     val sc = new SparkContext(sparkConf)
     val ssc = new StreamingContext(sc, Seconds(5))
@@ -77,12 +77,14 @@ object Fake {
       def defineOutputStream(fsDataOutputStream: FSDataOutputStream) = {
         val bufferedWriter = new BufferedWriter(
           new OutputStreamWriter(fsDataOutputStream))
-        bufferedWriter
-          .write(msg + "\n")
+        bufferedWriter.write(msg + "\n")
         bufferedWriter.close()
       }
+
       def append() = defineOutputStream(hdfs.append(path))
+
       def create() = defineOutputStream(hdfs.create(path))
+
       if (hdfs.exists(path)) append() else create()
 
     }
@@ -98,18 +100,14 @@ object Fake {
     }
 
     /** Defines message, when Kafka is a source */
-    def defineMessageKafka(message: String) = {
-      message.split("\t")(3)
-    }
+    def defineMessageKafka(message: String) = message.split("\t")(3)
 
     /** Defines message, when TCP socket is a source */
-    def defineMessageSocket(buff: Array[Byte], bytesInMessage: Int) = {
-      val messageArray = new Array[Byte](bytesInMessage - 4)
-      System.arraycopy(buff, 4, messageArray, 0, bytesInMessage - 4)
-      new String(messageArray, "UTF-8")
+    def defineMessageSocket(buff: Array[Byte]) = {
+      new String(buff.drop(4), "UTF-8")
     }
-    if (source == "kafka") {
 
+    if (source == "kafka") {
       val messages =
         KafkaUtils.createStream(ssc, zkQuorum, group, topicMap).map(_._2)
       messages.print()
@@ -121,7 +119,6 @@ object Fake {
               val facilityLevel = defineFacilityLevelKafka(message)
               val msg = defineMessageKafka(message)
               writeLogFiles(facilityLevel, msg)
-
             }
           )
       })
@@ -130,29 +127,30 @@ object Fake {
 
       val server = new ServerSocket(514)
       println("listening for connection on port ...")
-
       while (true) {
         val clientSocket = server.accept()
         println("accepted")
-        var buff = new Array[Byte](1024)
-        var k = -1
-        while ((k = clientSocket.getInputStream().read(buff, 0, buff.length)) != -1) {
-          val facilityLevel = defineFacilityLevelSocket(buff)
-          val msg = defineMessageSocket(buff, k)
+        while (true) {
+          val buff = new ArrayBuffer[Byte]()
+          var byte = 0.toByte
+          while (byte != 10.toByte) {
+            byte = (clientSocket.getInputStream().read()).toByte
+            println(byte.toString)
+            buff += byte
+          }
+          val facilityLevel = defineFacilityLevelSocket(buff.toArray)
           println("facilityLevel = " + facilityLevel)
+          val msg = defineMessageSocket(buff.toArray)
           println("message = " + msg)
           writeLogFiles(facilityLevel, msg)
         }
       }
-
     }
 
     Log.error("DEBUG info:" + zkQuorum)
-
     sys.ShutdownHookThread({
       println("Ctrl+C")
       try {
-
         ssc.stop(stopSparkContext = true, stopGracefully = true)
       } catch {
         case e: Throwable => {
@@ -160,11 +158,8 @@ object Fake {
         }
       }
     })
-
     ssc.start()
-
     ssc.awaitTermination()
-
   }
 }
 
