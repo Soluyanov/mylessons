@@ -91,24 +91,23 @@ object Fake {
     def defineFacilityLevelKafka(message: String) = message.split("\t").head
 
     /** Defines facility level, when TCP socket is a source */
-    def defineFacilityLevelSocket(message: String) = {
-      val pri =
-        message.substring(message.indexOf("<") + 1, message.indexOf(">")).toInt
-      val facility = pri / 8
-      val level = pri - (facility * 8)
-      facility.toString + '_' + level.toString
+    def defineFacilityLevelSocket(buff: Array[Byte]) = {
+      val facilityLevelArray = new Array[Byte](2)
+      System.arraycopy(buff, 1, facilityLevelArray, 0, 2)
+      new String(facilityLevelArray, "UTF-8")
     }
 
     /** Defines message, when Kafka is a source */
     def defineMessageKafka(message: String) = {
-      val fields = message.split("\t")
-      fields(3)
+      message.split("\t")(3)
     }
 
     /** Defines message, when TCP socket is a source */
-    def defineMessageSocket(message: String) =
-      message.substring(message.indexOf(": ") + 1)
-
+    def defineMessageSocket(buff: Array[Byte], bytesInMessage: Int) = {
+      val messageArray = new Array[Byte](bytesInMessage - 4)
+      System.arraycopy(buff, 4, messageArray, 0, bytesInMessage - 4)
+      new String(messageArray, "UTF-8")
+    }
     if (source == "kafka") {
 
       val messages =
@@ -134,16 +133,15 @@ object Fake {
 
       while (true) {
         val clientSocket = server.accept()
-        val reader = new BufferedReader(
-          new InputStreamReader(clientSocket.getInputStream()))
-        var line = reader.readLine()
-        while (!line.isEmpty()) {
-          println(line)
-
-          val msg = defineMessageSocket(line)
-          val facilityLevel = defineFacilityLevelSocket(line)
+        println("accepted")
+        var buff = new Array[Byte](1024)
+        var k = -1
+        while ((k = clientSocket.getInputStream().read(buff, 0, buff.length)) != -1) {
+          val facilityLevel = defineFacilityLevelSocket(buff)
+          val msg = defineMessageSocket(buff, k)
+          println("facilityLevel = " + facilityLevel)
+          println("message = " + msg)
           writeLogFiles(facilityLevel, msg)
-          line = reader.readLine()
         }
       }
 
