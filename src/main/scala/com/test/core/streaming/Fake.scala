@@ -93,12 +93,8 @@ object Fake {
     def defineFacilityLevelKafka(message: String) = message.split("\t").head
 
     /** Defines facility level, when TCP socket is a source */
-    def defineFacilityLevelSocket(buff: Array[Byte]) = {
-      val facilityLevelArray = new Array[Byte](2)
-      System.arraycopy(buff, 1, facilityLevelArray, 0, 2)
-      new String(facilityLevelArray, "UTF-8")
-    }
-
+    def defineFacilityLevelSocket(buff: Array[Byte]) = new String(buff.slice(1,3), "UTF-8")
+    
     /** Defines message, when Kafka is a source */
     def defineMessageKafka(message: String) = message.split("\t")(3)
 
@@ -162,4 +158,3 @@ object Fake {
     ssc.awaitTermination()
   }
 }
-
