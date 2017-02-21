@@ -135,7 +135,7 @@ object Fake {
       })
 
    val words = messages.map(x => (x.split("\t")(0).split('.')(1), 1))   //.foreachRDD(rdd=>(rdd.filter(x => x(0) == "info")))
-   val filtered = words.filter(x => x._1 == "info") 
+   val filtred = words.filter(x => x._1 == "info") 
    filtered.print()                  //   ((a:String,b:Int)=> a=="info")
    val windowedWordCounts = filtered.reduceByKeyAndWindow((a:Int,b:Int) => (a + b), Seconds(30), Seconds(30))
    windowedWordCounts.print()
